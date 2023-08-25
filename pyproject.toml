@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=65.5.1", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "linpyk"
+version = "0.1.0"
+description = "SDK for linear algebra on ArmoniK"
+readme = "README.md"
+authors = [{ name = "Quentin Delamea", email = "qdelamea@aneo.fr" }]
+classifiers = [
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+]
+keywords = ["linear algebra", "armonik", "graph", "task"]
+dependencies = [
+    "armonik >= 3.11.0",
+    "grpcio",
+    "networkx",
+    "numpy",
+    "pygraphviz",
+    "scipy"
+]
+requires-python = ">=3.10"
+
+[project.optional-dependencies]
+dev = ["black", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/aneoconsulting/ArmoniK.LinPyK"

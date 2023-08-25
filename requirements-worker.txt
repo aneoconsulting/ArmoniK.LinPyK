@@ -1,0 +1,4 @@
+armonik
+grpcio
+numpy
+scipy

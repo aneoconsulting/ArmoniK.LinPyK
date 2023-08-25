@@ -1,0 +1,17 @@
+# Virtual environment
+.venv
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# PyCharm settings
+.idea
+
+# Ruff cache
+.ruff_cache
+
+# Build
+dist
+linpyk.egg-info

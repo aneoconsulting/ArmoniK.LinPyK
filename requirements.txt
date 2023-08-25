@@ -1,0 +1,6 @@
+armonik
+grpcio
+networkx
+numpy
+pygraphviz
+scipy
