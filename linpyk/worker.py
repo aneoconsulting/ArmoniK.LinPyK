@@ -59,6 +59,7 @@ def processor(task_handler: TaskHandler) -> Output:
         return Output(str(error))
 
     for result_id, result in instance.get_results().items():
+        logger.info(f"WORKER LOGGING: result_id={result_id}, result={result}")
         task_handler.send_result(result_id, result)
 
     logger.info("Work completed successfully.")
@@ -79,24 +80,10 @@ def main() -> None:
     logger = ClefLogger.getLogger("ArmoniKWorker")
 
     # Define agent agent-worker communication endpoints
-    worker_scheme = (
-        "unix://"
-        if os.getenv("ComputePlane__WorkerChannel__SocketType", "unixdomainsocket")
-        == "unixdomainsocket"
-        else "http://"
-    )
-    agent_scheme = (
-        "unix://"
-        if os.getenv("ComputePlane__AgentChannel__SocketType", "unixdomainsocket")
-        == "unixdomainsocket"
-        else "http://"
-    )
-    worker_endpoint = worker_scheme + os.getenv(
-        "ComputePlane__WorkerChannel__Address", "/cache/armonik_worker.sock"
-    )
-    agent_endpoint = agent_scheme + os.getenv(
-        "ComputePlane__AgentChannel__Address", "/cache/armonik_agent.sock"
-    )
+    worker_scheme = "unix://" if os.getenv("ComputePlane__WorkerChannel__SocketType", "unixdomainsocket") == "unixdomainsocket" else "http://"
+    agent_scheme = "unix://" if os.getenv("ComputePlane__AgentChannel__SocketType", "unixdomainsocket") == "unixdomainsocket" else "http://"
+    worker_endpoint = worker_scheme+os.getenv("ComputePlane__WorkerChannel__Address", "/cache/armonik_worker.sock")
+    agent_endpoint = agent_scheme+os.getenv("ComputePlane__AgentChannel__Address", "/cache/armonik_agent.sock")
 
     # Start worker
     logger.info("Worker just started!")

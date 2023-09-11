@@ -5,6 +5,7 @@ Worker execution workflow.
 import numpy as np
 import logging
 
+from armonik.worker import ClefLogger
 from linpyk.common.dto import OpCode
 from linpyk.common.payload import Payload
 from linpyk.common.result import Result
@@ -34,7 +35,7 @@ class WorkerProcessingInstance:
         payload: bytes,
         expected_output_ids: List[str],
         data_dependencies: Dict[str, bytearray],
-        logger: logging.Logger | None = None,
+        logger: ClefLogger | None = None,
     ) -> None:
         deserialized_payload = Payload.deserialize(payload)
         self._opcode = deserialized_payload.opcode

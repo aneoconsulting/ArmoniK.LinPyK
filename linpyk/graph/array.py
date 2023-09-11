@@ -6,7 +6,10 @@ import numpy as np
 from abc import ABC
 from linpyk.graph import graph
 from linpyk.graph.nodes import TileNode
-from typing import Callable, Tuple, Generator
+from typing import Callable, Tuple, Generator, Union
+
+
+ShapeLike = Union[int, Tuple[int, ...]]
 
 
 class DTArray(ABC):
@@ -19,11 +22,11 @@ class DTArray(ABC):
 
     Parameters
     ----------
-    shape: The shape of the array.
-    label: The name of the array.
+    shape (ShapeLike): The shape of the array.
+    label (str): The name of the array.
     """
 
-    def __init__(self, shape, label: str):
+    def __init__(self, shape: ShapeLike, label: str):
         self._tiles = np.empty(shape=shape, dtype=object)
         self._label = label
 
@@ -38,7 +41,7 @@ class DTArray(ABC):
             if node is not None:
                 yield node
 
-    def _name_block(self, index) -> str:
+    def _name_block(self, index: ShapeLike) -> str:
         """Generate a name for a tile of the matrix.
 
         Parameters
@@ -51,7 +54,7 @@ class DTArray(ABC):
         """
         return f"{self._label}[{str(index).replace('(', '').replace(')', '')}]"
 
-    def __getitem__(self, index) -> TileNode:
+    def __getitem__(self, index: ShapeLike) -> TileNode:
         """Returns a given tile of the matrix.
 
         Parameters
@@ -64,7 +67,7 @@ class DTArray(ABC):
         """
         return self._tiles[index]
 
-    def __setitem__(self, index, tile: TileNode) -> None:
+    def __setitem__(self, index: ShapeLike, tile: TileNode) -> None:
         """Set or reset a tile referenced by the array.
 
         Parameters
@@ -80,6 +83,17 @@ class DTArray(ABC):
         graph.current_graph.add_node(tile)
 
         self._tiles[index] = tile
+
+    @classmethod
+    def from_numpy(cls, label: str, array: np.ndarray, tile_size_map: Callable[[ShapeLike], ShapeLike]):
+
+
+        for size in array.shape:
+            if size % tile_size != 0:
+                raise ValueError()
+        shape = tuple([size // tile_size for size in array.shape])
+        dt_array = DTArray(shape, label)
+        dt_array.set_from_array(array, lambda _: (tile_size, tile_size))
 
     def set_from_array(
         self, array: np.ndarray, tile_size_map: Callable[[int, int], Tuple[int, int]]

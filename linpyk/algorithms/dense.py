@@ -11,8 +11,6 @@ def cholesky(a: DTArray) -> DTArray:
     if p < 1:
         raise ValueError(f"Invalid matrix shape {a.shape}.")
 
-    a[0, 0].shape[0]
-
     l = Empty(a.shape, "L")
     a = [a] + [Empty((p - k, p - k), f"A{k}") for k in range(1, p)]
 

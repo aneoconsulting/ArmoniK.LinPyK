@@ -24,7 +24,7 @@ backend = ArmoniKBackend(
         partition_id="default",
     ),
 )
-backend = DummyBackend()
+# backend = DummyBackend()
 
 g = ArmoniKGraph()
 

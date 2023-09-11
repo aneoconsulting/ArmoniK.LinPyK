@@ -14,8 +14,9 @@ classifiers = [
 ]
 keywords = ["linear algebra", "armonik", "graph", "task"]
 dependencies = [
-    "armonik >= 3.11.0",
-    "grpcio",
+    "armonik >= 3.10.0",
+    "grpcio == 1.56.0",
+    "grpcio-tools == 1.56.0",
     "networkx",
     "numpy",
     "pygraphviz",

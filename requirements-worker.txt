@@ -1,4 +1,5 @@
-armonik
-grpcio
+grpcio==1.56.0
+grpcio-tools==1.56.0
 numpy
 scipy
+armonik==3.11.0
