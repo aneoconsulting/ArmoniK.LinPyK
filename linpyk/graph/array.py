@@ -6,6 +6,7 @@ import numpy as np
 from abc import ABC
 from linpyk.graph import graph
 from linpyk.graph.nodes import TileNode
+from math import ceil
 from typing import Callable, Tuple, Generator, Union
 
 
@@ -85,15 +86,30 @@ class DTArray(ABC):
         self._tiles[index] = tile
 
     @classmethod
-    def from_numpy(cls, label: str, array: np.ndarray, tile_size_map: Callable[[ShapeLike], ShapeLike]):
+    def from_numpy(cls, label: str, array: np.ndarray, tile_size: int):
+        """Create a DTArray from a Numpy array by performing the block decomposition of the NumPy array.
 
+        Parameters
+        ----------
+        label (str): DTArray label.
+        array (numpy.ndarray): Input array of shape (k, n).
+        tile_size (int): Size of each block.
 
-        for size in array.shape:
-            if size % tile_size != 0:
-                raise ValueError()
-        shape = tuple([size // tile_size for size in array.shape])
-        dt_array = DTArray(shape, label)
-        dt_array.set_from_array(array, lambda _: (tile_size, tile_size))
+        Returns
+        ----------
+        DTArray: A DTArray initialized with the blocks of the Numpy array.
+        """
+
+        k, n = array.shape
+        dta = DTArray((ceil(k / tile_size), ceil(n / tile_size)), label)
+
+        for i in range(0, ceil(k / tile_size)):
+            for j in range(0, ceil(n / tile_size)):
+                bsi = min(tile_size, k - i * tile_size)
+                bsj = min(tile_size, n - j * tile_size)
+                dta[i, j] = TileNode((bsi, bsj), values=array[i*tile_size:i*tile_size+bsi, j*tile_size:j*tile_size+bsj])
+
+        return dta
 
     def set_from_array(
         self, array: np.ndarray, tile_size_map: Callable[[int, int], Tuple[int, int]]

@@ -40,3 +40,48 @@ def cholesky(a: DTArray) -> DTArray:
                     )
 
     return l
+
+
+def forward_substitution(a: DTArray, b: DTArray, trans: bool = False, lower=False, unit_diagonal=False, label: str = "X"):
+    p = a.shape[0]
+    x = Empty(b.shape, label)
+    b = [b] + [Empty((p - k, 1), f"{b._label}{k}") for k in range(1, p)]
+
+    for j in range(p):
+        x[j, 0] = ops.tile_trsm(alpha=1., a=a[j, j], b=b[j][0, 0], lower=int(lower), trans_a=int(trans), diag=unit_diagonal)
+        for i in range(0, p - j - 1):
+            #   b[i] = b[i] - A[i,j] * X[j]
+            b[j + 1][i, 0] = ops.tile_gemm(alpha=-1., a=a[j + i + 1, j], b=x[j, 0], beta=1., c=b[j][i + 1, 0], trans_a=int(trans))
+
+    return x
+
+
+def backward_substitution(a: DTArray, b: DTArray, trans: bool = False, lower=False, unit_diagonal=False, label: str = "X"):
+    p = a.shape[0]
+    x = Empty(b.shape, label)
+    b = [b] + [Empty((p - k, 1), f"{b._label}{k}") for k in range(1, p)]
+
+    def swap(i, j):
+        if trans:
+            return j, i
+        return i, j
+
+    for j in reversed(range(p)):
+        x[j, 0] = ops.tile_trsm(alpha=1., a=a[j, j], b=b[p - 1 - j][j, 0], lower=int(lower), trans_a=int(trans),
+                                diag=unit_diagonal)
+        for i in reversed(range(j)):
+            #   b[i] = b[i] - A[i,j] * X[j]
+            b[p - j][i, 0] = ops.tile_gemm(alpha=-1., a=a[swap(i, j)], b=x[j, 0], beta=1., c=b[p - 1 - j][i, 0],
+                                           trans_a=int(trans))
+
+    return x
+
+
+def solve(a: DTArray, b: DTArray, assume_a: str = "gen") -> DTArray:
+    match assume_a:
+        case 'spd':
+            l = cholesky(a)
+            y = forward_substitution(l, b, lower=True, label="y")
+            return backward_substitution(l, y, trans=True, lower=True, label="x")
+        case _:
+            raise NotImplementedError()

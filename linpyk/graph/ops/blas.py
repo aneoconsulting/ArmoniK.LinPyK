@@ -161,7 +161,7 @@ def tile_gemm(
 
     """
 
-    x = TileNode(a.shape)
+    x = TileNode(b.shape)
     control = ControlNode(
         OpCode.GEMM,
         "GEMM",

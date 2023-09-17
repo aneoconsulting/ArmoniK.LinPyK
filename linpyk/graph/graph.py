@@ -89,3 +89,26 @@ class ArmoniKGraph(nx.DiGraph):
         gv_graph = nx.nx_agraph.to_agraph(self)
         gv_graph.layout(prog="dot")
         gv_graph.draw(fname)
+
+    def control_graph(self):
+        from linpyk.graph.nodes import ControlNode, DataNode
+        control_graph = nx.DiGraph()
+        for node in self.nodes:
+            if isinstance(node, ControlNode):
+                control_inputs = [*self.predecessors(node)]
+                if control_inputs:
+                    for control_input in control_inputs:
+                        assert isinstance(control_input, DataNode)
+                        pred_controls = [*self.predecessors(control_input)]
+                        if pred_controls:
+                            control_graph.add_edges_from([(pred_control, node) for pred_control in pred_controls])
+
+                control_outputs = [*self.successors(node)]
+                if control_outputs:
+                    for control_output in control_outputs:
+                        assert isinstance(control_output, DataNode)
+                        succ_controls = [*self.successors(control_output)]
+                        if succ_controls:
+                            control_graph.add_edges_from([(node, succ_control) for succ_control in succ_controls])
+
+        return control_graph
