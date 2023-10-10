@@ -211,6 +211,7 @@ class SessionContext:
                         data_dependencies=list(dependency_names.values()),
                     )
                 )
+        exit(0)
         return tasks
 
     def get_data_node(self, data_node: DataNode) -> None:

@@ -76,6 +76,24 @@ class WorkerProcessingInstance:
             self._logger.info(f"Performing operation with code {self._opcode}.")
 
         match self._opcode:
+            case OpCode.DRGM:
+                arr = None
+                size = self._options["size"]
+                idx = self._options["idx"]
+                match self._options["gen"]:
+                    case "eye":
+                        if idx[0] == idx[1]:
+                            arr = np.eye(size, dtype=np.float64)
+                        else:
+                            arr = np.zeros((size, size))
+                    case "diag":
+                        if idx[0] == idx[1]:
+                            arr = np.diag(np.random.random(size))
+                        else:
+                            arr = np.zeros((size, size))
+                    case _:
+                        raise RuntimeError(f"Unhandled matrix generation {self._options['gen']}")
+                self._outputs["a"] = Result(arr)
             case OpCode.POTRF:
                 res, info = lapack.dpotrf(self._inputs["a"], **self._options)
                 if info != 0:

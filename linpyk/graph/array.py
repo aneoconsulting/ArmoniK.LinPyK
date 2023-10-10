@@ -36,11 +36,15 @@ class DTArray(ABC):
         """Returns the shape of the array."""
         return self._tiles.shape
 
-    def tiles(self) -> Generator[TileNode, None, None]:
+    def tiles(self, index: bool = False) -> Generator[TileNode, None, None]:
         """Iterate over the nodes referenced by the array."""
-        for node in self._tiles.flat:
-            if node is not None:
-                yield node
+        for i, row in enumerate(self._tiles):
+            for j, node in enumerate(row):
+                if node is not None:
+                    if index:
+                        yield (i, j), node
+                    else:
+                        yield node
 
     def _name_block(self, index: ShapeLike) -> str:
         """Generate a name for a tile of the matrix.

@@ -13,6 +13,8 @@ class OpCode(IntEnum):
 
     Members
     ----------
+    DRGM : int
+        Computes a random squared matrix.
     DPOTRF : int
         Computes the Cholesky factorization of a real symmetric positive definite
         matrix A. The factorization has the form A = L * L**T.
@@ -35,7 +37,7 @@ class OpCode(IntEnum):
 
     """
 
-    RAND = auto()
+    DRGM = auto()
     POTRF = auto()
     TRSM = auto()
     SYRK = auto()
