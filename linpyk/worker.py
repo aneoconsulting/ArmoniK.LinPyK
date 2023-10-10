@@ -59,7 +59,6 @@ def processor(task_handler: TaskHandler) -> Output:
         return Output(str(error))
 
     for result_id, result in instance.get_results().items():
-        logger.info(f"WORKER LOGGING: result_id={result_id}, result={result}")
         task_handler.send_result(result_id, result)
 
     logger.info("Work completed successfully.")
