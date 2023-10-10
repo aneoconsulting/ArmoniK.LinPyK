@@ -63,10 +63,10 @@ class ArmoniKBackend(BaseBackend):
             self._client.cancel_session(self._session_id)
             self._logger.warning(f"Session {self._session_id} has been closed")
 
-    def submit_tasks(self, tasks: List[TaskDefinition]) -> None:
+    def submit_tasks(self, tasks: List[TaskDefinition], partition: str = "default") -> None:
         if self._session_id is not None:
             self._logger.info(f"Submitting tasks in session {self._session_id}")
-            tasks, submission_errors = self._client.submit(self._session_id, tasks)
+            tasks, submission_errors = self._client.submit(self._session_id, tasks, TaskOptions(partition_id=partition))
             for task in tasks:
                 if self._logger.getEffectiveLevel() == logging.DEBUG:
                     self._logger.debug(f"Submitted task: {task}")

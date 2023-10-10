@@ -7,7 +7,7 @@ import networkx as nx
 
 from armonik.common import TaskOptions, TaskDefinition, ResultAvailability
 from contextlib import contextmanager
-from linpyk.common import Payload, Result
+from linpyk.common import OpCode, Payload, Result
 from linpyk.graph import ArmoniKGraph, ControlNode, DataNode, DTArray
 from typing import Dict, List, Union
 
@@ -63,7 +63,7 @@ class BaseBackend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def submit_tasks(self, tasks: List[TaskDefinition]) -> None:
+    def submit_tasks(self, tasks: List[TaskDefinition], partition:str = "Default") -> None:
         """
         Submit a list of tasks to the ArmoniK cluster.
 
@@ -71,6 +71,8 @@ class BaseBackend(abc.ABC):
         ----------
         tasks : List[TaskDefinition]
             Definitions of the tasks to run.
+        partition : str
+            Partition where tasks are submitted.
         """
         pass
 
@@ -138,8 +140,11 @@ class SessionContext:
         raise NotImplementedError()
 
     def run(self, exec_graph: ArmoniKGraph) -> None:
-        self._backend.submit_results(self._pre_compile(exec_graph))
-        self._backend.submit_tasks(SessionContext._compile(exec_graph))
+        results_to_submit = self._pre_compile(exec_graph)
+        if results_to_submit:
+            self._backend.submit_results(results_to_submit)
+        for partition, tasks in SessionContext._compile(exec_graph).items():
+            self._backend.submit_tasks(tasks, partition)
 
     def _pre_compile(self, exec_graph: ArmoniKGraph) -> Dict[int, Result]:
         """Perform some operations required for graph compilation:
@@ -184,9 +189,12 @@ class SessionContext:
         List[TaskDefinition]
             The list of task corresponding to the graph.
         """
-        tasks = []
+        tasks = {"init": [], "default": []}
         for node in nx.topological_sort(exec_graph):
             if isinstance(node, ControlNode):
+                partition = "default"
+                if node.opcode == OpCode.DRGM:
+                    partition = "init"
                 expected_output_names = {
                     exec_graph.edges[node, successor][
                         "output_name"
@@ -199,7 +207,7 @@ class SessionContext:
                     ]: predecessor.result_id
                     for predecessor in exec_graph.predecessors(node)
                 }
-                tasks.append(
+                tasks[partition].append(
                     TaskDefinition(
                         Payload(
                             node.opcode,
@@ -211,7 +219,6 @@ class SessionContext:
                         data_dependencies=list(dependency_names.values()),
                     )
                 )
-        exit(0)
         return tasks
 
     def get_data_node(self, data_node: DataNode) -> None:

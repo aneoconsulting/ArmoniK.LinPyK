@@ -38,7 +38,7 @@ class WorkerProcessingInstance:
         logger: ClefLogger | None = None,
     ) -> None:
         deserialized_payload = Payload.deserialize(payload)
-        self._opcode = deserialized_payload.opcode
+        self._opcode = OpCode(deserialized_payload.opcode)
         self._output_names = deserialized_payload.expected_output_names
         self._outputs = {}
         self._inputs = {}
@@ -88,7 +88,7 @@ class WorkerProcessingInstance:
                             arr = np.zeros((size, size))
                     case "diag":
                         if idx[0] == idx[1]:
-                            arr = np.diag(np.random.random(size))
+                            arr = np.diag(0.5 + 1.5*np.random.random(size))
                         else:
                             arr = np.zeros((size, size))
                     case _:

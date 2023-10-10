@@ -48,7 +48,7 @@ class DummyBackend(BaseBackend):
     def cancel_session(self) -> None:
         pass
 
-    def submit_tasks(self, tasks: List[TaskDefinition]) -> None:
+    def submit_tasks(self, tasks: List[TaskDefinition], partition: str = "Default") -> None:
         for task in tasks:
             task_data_dependencies = {}
             if task.data_dependencies:
