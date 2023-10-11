@@ -1,5 +1,6 @@
 import argparse
 import numpy as np
+import time
 
 from armonik.common import TaskOptions
 from datetime import timedelta
@@ -14,6 +15,9 @@ parser.add_argument("-b", "--block-size", type=int, help="Block size.")
 #parser.add_argument("-pi", "--partition-init", type=str, help="Partition for initialization.")
 #parser.add_argument("-pc", "--partition-compute", type=str, help="Partition for computation.")
 args = parser.parse_args()
+
+print("Started Cholesky decomposition...")
+start = time.time()
 
 backend = ArmoniKBackend(
     args.endpoint,
@@ -35,12 +39,14 @@ with g:
 
 with backend.new_session() as sc:
     sc.run(g)
-    sc.get(a)
-    sc.get(l)
+#     sc.get(a)
+#     sc.get(l)
+#
+# numpy_a = a.to_numpy()
+# numpy_l = l.to_numpy(triangular=True)
+#
+# print(
+#     f"Max coefficient difference: {np.max((np.matmul(numpy_l, numpy_l.T) - numpy_a).flat)}"
+# )
 
-numpy_a = a.to_numpy()
-numpy_l = l.to_numpy(triangular=True)
-
-print(
-    f"Max coefficient difference: {np.max((np.matmul(numpy_l, numpy_l.T) - numpy_a).flat)}"
-)
+print(f"Job submission completed in {time.time() - start}")
