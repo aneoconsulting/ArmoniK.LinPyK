@@ -12,6 +12,20 @@ from linpyk.graph import ArmoniKGraph, ControlNode, DataNode, DTArray
 from typing import Dict, List, Union
 
 
+def batched(iterable, n: int):
+    it = iter(iterable)
+    while True:
+        batch = []
+        try:
+            for i in range(n):
+                batch.append(next(it))
+        except StopIteration:
+            if len(batch) > 0:
+                yield batch
+            break
+        yield batch
+
+
 class BaseBackend(abc.ABC):
     """
     Base class for backend. A backend is an object abstracting the computing infrastructure
@@ -90,7 +104,7 @@ class BaseBackend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def request_output_id(self):
+    def request_output_id(self, num: int = 1) -> List[str]:
         """
         Request for a result unique id.
         """
@@ -144,7 +158,8 @@ class SessionContext:
         if results_to_submit:
             self._backend.submit_results(results_to_submit)
         for partition, tasks in SessionContext._compile(exec_graph).items():
-            self._backend.submit_tasks(tasks, partition)
+            for task_batch in batched(tasks, 100):
+                self._backend.submit_tasks(task_batch, partition)
 
     def _pre_compile(self, exec_graph: ArmoniKGraph) -> Dict[int, Result]:
         """Perform some operations required for graph compilation:
@@ -160,9 +175,11 @@ class SessionContext:
         ----------
         Dict[int, Result] : The results to be uploaded before the graph execution.
         """
-        for node in exec_graph.nodes:
-            if isinstance(node, DataNode):
-                node.result_id = self._backend.request_output_id()
+        for batch in batched(exec_graph.nodes, 1000):
+            data_nodes = [n for n in batch if isinstance(n, DataNode)]
+            result_ids = self._backend.request_output_id(len(data_nodes))
+            for data_node, result_id in zip(data_nodes, result_ids):
+                data_node.result_id = result_id
 
         results = {}
         for node in exec_graph.nodes:

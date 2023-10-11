@@ -2,12 +2,12 @@
 Basic backend to run code using any ArmoniK backend locally or remotely.
 """
 import uuid
-
 import grpc
 import logging
 
 from armonik.client import ArmoniKSubmitter, ArmoniKResult
 from armonik.common import TaskOptions, TaskDefinition, ResultAvailability
+from datetime import timedelta
 from linpyk.backend.base import BaseBackend
 from linpyk.common.result import Result
 from linpyk.exceptions import BackendError
@@ -66,7 +66,12 @@ class ArmoniKBackend(BaseBackend):
     def submit_tasks(self, tasks: List[TaskDefinition], partition: str = "default") -> None:
         if self._session_id is not None:
             self._logger.info(f"Submitting tasks in session {self._session_id}")
-            tasks, submission_errors = self._client.submit(self._session_id, tasks, TaskOptions(partition_id=partition))
+            tasks, submission_errors = self._client.submit(self._session_id, tasks, TaskOptions(
+                max_duration=timedelta(seconds=300),
+                priority=1,
+                max_retries=5,
+                partition_id=partition
+            ))
             for task in tasks:
                 if self._logger.getEffectiveLevel() == logging.DEBUG:
                     self._logger.debug(f"Submitted task: {task}")
@@ -115,12 +120,12 @@ class ArmoniKBackend(BaseBackend):
 
         self._result_client._client.UploadResultData(upload_result_stream())
 
-    def request_output_id(self):
+    def request_output_id(self, num: int = 1) -> List[str]:
         if self._session_id is not None:
-            result_name = str(uuid.uuid4())
-            return self._result_client.get_results_ids(self._session_id, [result_name])[
-                result_name
-            ]
+            self._logger.info(f"Creating {num} results.")
+            result_ids = self._result_client.get_results_ids(self._session_id, [str(uuid.uuid4()) for _ in range(num)]).values()
+            self._logger.info(f"Created {num} results.")
+            return list(result_ids)
 
     def get_result(self, result_id: str) -> Union[Result, None]:
         self._logger.info(f"Retrieving result {result_id}...")
