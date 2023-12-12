@@ -1,0 +1,58 @@
+name: Build and publish worker container
+
+permissions:
+  contents: write
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  genversion:
+    runs-on: ubuntu-latest
+    name: Version
+    outputs:
+      version: ${{ steps.genver.outputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@f43a0e5ff2bd294095638e18286ca9a3d1956744 # v3
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+      - name: Generate Version
+        id: genver
+        run: echo "VERSION=$(npx @aneoconsultingfr/generate-next-version@latest --edge)" >> "$GITHUB_OUTPUT"
+      - name: Summary version
+        # Print to the summary
+        run: echo "VERSION=${{ steps.genver.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+
+  buildImages:
+    runs-on: ubuntu-latest
+    needs:
+      - genversion
+    steps:
+    - name: Checkout
+      uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # v4
+      with:
+        ref: ${{ github.ref }}
+
+    - name: login
+      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_LOGIN }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+
+    - name: Build and push
+      uses: docker/build-push-action@0565240e2d4ab88bba5387d719585280857ece09 # v5
+      with:
+        file: Dockerfile
+        context: .
+        platforms: |
+          linux/amd64
+        push: true
+        tags: |
+            dockerhubaneo/armonik_linpyk:${{ needs.genversion.outputs.version }}
