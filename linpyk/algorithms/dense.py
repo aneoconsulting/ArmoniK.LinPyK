@@ -1,4 +1,4 @@
-from linpyk.graph import DTArray, Empty, ops
+from linpyk.graph import DTArray, ops
 
 
 def cholesky(a: DTArray) -> DTArray:
@@ -11,8 +11,8 @@ def cholesky(a: DTArray) -> DTArray:
     if p < 1:
         raise ValueError(f"Invalid matrix shape {a.shape}.")
 
-    l = Empty(a.shape, "L")
-    a = [a] + [Empty((p - k, p - k), f"A{k}") for k in range(1, p)]
+    l = DTArray(a.shape, "L")
+    a = [a] + [DTArray((p - k, p - k), f"A{k}") for k in range(1, p)]
 
     for k in range(p):
         # a[k][k,k] = l[k,k] * l[k,k]**T
@@ -44,8 +44,8 @@ def cholesky(a: DTArray) -> DTArray:
 
 def forward_substitution(a: DTArray, b: DTArray, trans: bool = False, lower=False, unit_diagonal=False, label: str = "X"):
     p = a.shape[0]
-    x = Empty(b.shape, label)
-    b = [b] + [Empty((p - k, 1), f"{b._label}{k}") for k in range(1, p)]
+    x = DTArray(b.shape, label)
+    b = [b] + [DTArray((p - k, 1), f"{b._label}{k}") for k in range(1, p)]
 
     for j in range(p):
         x[j, 0] = ops.tile_trsm(alpha=1., a=a[j, j], b=b[j][0, 0], lower=int(lower), trans_a=int(trans), diag=unit_diagonal)
@@ -58,8 +58,8 @@ def forward_substitution(a: DTArray, b: DTArray, trans: bool = False, lower=Fals
 
 def backward_substitution(a: DTArray, b: DTArray, trans: bool = False, lower=False, unit_diagonal=False, label: str = "X"):
     p = a.shape[0]
-    x = Empty(b.shape, label)
-    b = [b] + [Empty((p - k, 1), f"{b._label}{k}") for k in range(1, p)]
+    x = DTArray(b.shape, label)
+    b = [b] + [DTArray((p - k, 1), f"{b._label}{k}") for k in range(1, p)]
 
     def swap(i, j):
         if trans:

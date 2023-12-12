@@ -1,6 +1,5 @@
 """
-Define Data Transfer Objects (DTOs) interfaces for data transfer between clients
-and workers.
+Define opcodes for tasks. It serves as an interface between clients and workers.
 """
 
 from enum import auto, IntEnum, unique

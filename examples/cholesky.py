@@ -7,15 +7,16 @@ from datetime import timedelta
 from armonik.common import TaskOptions
 from linpyk.algorithms import cholesky
 from linpyk.backend import ArmoniKBackend, DummyBackend
-from linpyk.graph import ArmoniKGraph, Hilbert
+from linpyk.graph import ArmoniKGraph, hilbert
 
 
 start = time.time()
 
-os.environ["LINPYK_LOGGING"] = str(logging.INFO)
+endpoint = os.environ.get("ARMONIK_BACKEND", "192.168.6.61:5001")
+os.environ["LINPYK_LOGGING"] = "INFO"
 
 backend = ArmoniKBackend(
-    "192.168.6.61:5001",
+    endpoint,
     ["default"],
     TaskOptions(
         max_duration=timedelta(seconds=300),
@@ -24,7 +25,7 @@ backend = ArmoniKBackend(
         partition_id="default",
     ),
 )
-# backend = DummyBackend()
+backend = DummyBackend()
 
 g = ArmoniKGraph()
 
@@ -32,7 +33,7 @@ size = 6
 block_size = 2
 
 with g:
-    a = Hilbert("A", size, block_size)
+    a = hilbert("A", size, block_size)
     l = cholesky(a)
 
 g.savefig("./graph.png")

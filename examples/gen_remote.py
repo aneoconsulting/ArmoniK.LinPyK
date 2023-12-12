@@ -39,14 +39,14 @@ with g:
 
 with backend.new_session() as sc:
     sc.run(g)
-#     sc.get(a)
-#     sc.get(l)
-#
-# numpy_a = a.to_numpy()
-# numpy_l = l.to_numpy(triangular=True)
-#
-# print(
-#     f"Max coefficient difference: {np.max((np.matmul(numpy_l, numpy_l.T) - numpy_a).flat)}"
-# )
+    sc.get(a)
+    sc.get(l)
+
+numpy_a = a.to_numpy()
+numpy_l = l.to_numpy(triangular=True)
+
+print(
+    f"Max coefficient difference: {np.max((np.matmul(numpy_l, numpy_l.T) - numpy_a).flat)}"
+)
 
 print(f"Job submission completed in {time.time() - start}")

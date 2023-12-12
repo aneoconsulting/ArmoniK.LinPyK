@@ -3,7 +3,6 @@ Base classes for graph nodes.
 """
 
 import abc
-import uuid
 from linpyk.common import OpCode
 from linpyk.graph.style import (
     NodeStyleOptions,
@@ -26,12 +25,8 @@ class BaseNode(abc.ABC):
     def __init__(
         self, label: str | None = None, style: NodeStyleOptions | None = None
     ) -> None:
-        self.uuid = int(uuid.uuid4())
         self.label = label
         self.style = style
-
-    def __hash__(self) -> int:
-        return self.uuid
 
     def __repr__(self) -> str:
         return str(self.label)

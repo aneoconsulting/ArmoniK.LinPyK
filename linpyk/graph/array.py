@@ -3,7 +3,6 @@ Classes for tiled arrays representation and handling in task graphs
 """
 
 import numpy as np
-from abc import ABC
 from linpyk.graph import graph
 from linpyk.graph.nodes import TileNode
 from math import ceil
@@ -13,7 +12,7 @@ from typing import Callable, Tuple, Generator, Union
 ShapeLike = Union[int, Tuple[int, ...]]
 
 
-class DTArray(ABC):
+class DTArray:
     """Class for tiled arrays representation and handling in task graphs.
     DTArray stands for Distributed Tiled Array. This class allows intuitive implementation of linear algebra algorithm.
 
@@ -105,7 +104,7 @@ class DTArray(ABC):
         """
 
         k, n = array.shape
-        dta = DTArray((ceil(k / tile_size), ceil(n / tile_size)), label)
+        dta = cls((ceil(k / tile_size), ceil(n / tile_size)), label)
 
         for i in range(0, ceil(k / tile_size)):
             for j in range(0, ceil(n / tile_size)):
@@ -173,21 +172,15 @@ class DTArray(ABC):
                     )
         return np.block(blocks.tolist())
 
-    def _transpose(self):
+    @property
+    def T(self):
         self._tiles = self._tiles.T
         for index, tile in np.ndenumerate(self._tiles):
             if tile is not None:
                 self._tiles[index].values = tile.values.T
 
 
-class Empty(DTArray):
-    """A class for empty DTArrays."""
-
-    def __init__(self, shape, label):
-        super().__init__(shape, label)
-
-
-class Pascal(DTArray):
+def pascal(label, n: int, b: int, lower: bool = True) -> DTArray:
     """
     DTArray initialized as a lower Pascal matrix of size n x n.
     Each element of the matrix contains an integer representing the corresponding value in the Pascal matrix.
@@ -200,7 +193,7 @@ class Pascal(DTArray):
 
     Example
     ----------
-    >>> pascal = Pascal(6, 2):
+    >>> pascal = pascal(6, 2):
     >>> pascal.to_numpy()
         [[ 1.  0.  0.  0.  0.  0.]
         [ 1.  1.  0.  0.  0.  0.]
@@ -210,34 +203,33 @@ class Pascal(DTArray):
         [ 1.  5. 10. 10.  5.  1.]]
 
     """
+    if n % b != 0:
+        raise ValueError("Tiles size must fit the size of the matrix.")
 
-    def __init__(self, label, n: int, b: int, lower: bool = True):
-        if n % b != 0:
-            raise ValueError("Tiles size must fit the size of the matrix.")
+    pascal_dta = DTArray((n // b, n // b), label)
 
-        super().__init__((n // b, n // b), label)
+    pascal = np.zeros((n, n), dtype=int)
+    pascal[0, 0] = 1
 
-        pascal = np.zeros((n, n), dtype=int)
-        pascal[0, 0] = 1
+    for i in range(1, n):
+        for j in range(i + 1):
+            if j == 0:
+                pascal[i, j] = pascal[i - 1, j]
+            elif j == i:
+                pascal[i, j] = pascal[i - 1, j - 1]
+            else:
+                pascal[i, j] = pascal[i - 1, j] + pascal[i - 1, j - 1]
 
-        for i in range(1, n):
-            for j in range(i + 1):
-                if j == 0:
-                    pascal[i, j] = pascal[i - 1, j]
-                elif j == i:
-                    pascal[i, j] = pascal[i - 1, j - 1]
-                else:
-                    pascal[i, j] = pascal[i - 1, j] + pascal[i - 1, j - 1]
+    pascal.astype(float)
 
-        pascal.astype(float)
+    pascal_dta.set_from_array(pascal, lambda index: (b, b))
 
-        self.set_from_array(pascal, lambda index: (b, b))
-
-        if not lower:
-            self._transpose()
+    if lower:
+        return pascal_dta
+    return pascal_dta.T
 
 
-class Hilbert(DTArray):
+def hilbert(label: str, n: int, b: int) -> DTArray:
     """
     DTArray initialized as a Hilbert matrix of size N x N,
 
@@ -248,7 +240,7 @@ class Hilbert(DTArray):
 
     Example
     ----------
-    >>> hilbert = Hilbert(6, 2):
+    >>> hilbert = hilbert(6, 2):
     >>> hilbert.to_numpy()
        [[2.         0.5        0.33333333 0.25       0.2        0.16666667]
         [0.5        1.33333333 0.25       0.2        0.16666667 0.14285714]
@@ -257,26 +249,25 @@ class Hilbert(DTArray):
         [0.2        0.16666667 0.14285714 0.125      1.11111111 0.1       ]
         [0.16666667 0.14285714 0.125      0.11111111 0.1        1.09090909]]
     """
+    if n % b != 0:
+        raise ValueError("Tiles size must fit the size of the matrix.")
+    nb = n // b
 
-    def __init__(self, label, n: int, b: int):
-        if n % b != 0:
-            raise ValueError("Tiles size must fit the size of the matrix.")
-        nb = n // b
+    hilbert_dta = DTArray((nb, nb), label)
 
-        super().__init__((nb, nb), label)
-
-        hilbert = np.array(np.eye(n))
-        size_p = 1.0
-        for m in range(nb):
-            for n in range(nb):
-                for mm in range(b):
-                    for nn in range(b):
-                        row = m * b + mm
-                        col = n * b + nn
-                        hilbert[row, col] = 1.0 / (1.0 + (n * b + mm) + (m * b + nn))
-                        if n == m and mm == nn:
-                            # Improvement of numerical stability: Adding a small number size_p
-                            # to these diagonal elements can improve numerical stability when computing the matrix inverse.
-                            # and reduce sensitivity to round-off errors.
-                            hilbert[row, col] += 1.0 * size_p
-        self.set_from_array(hilbert, lambda _: (b, b))
+    hilbert = np.array(np.eye(n))
+    size_p = 1.0
+    for m in range(nb):
+        for n in range(nb):
+            for mm in range(b):
+                for nn in range(b):
+                    row = m * b + mm
+                    col = n * b + nn
+                    hilbert[row, col] = 1.0 / (1.0 + (n * b + mm) + (m * b + nn))
+                    if n == m and mm == nn:
+                        # Improvement of numerical stability: Adding a small number size_p
+                        # to these diagonal elements can improve numerical stability when computing the matrix inverse.
+                        # and reduce sensitivity to round-off errors.
+                        hilbert[row, col] += 1.0 * size_p
+    hilbert_dta.set_from_array(hilbert, lambda _: (b, b))
+    return hilbert_dta

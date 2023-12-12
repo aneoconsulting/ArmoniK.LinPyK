@@ -55,15 +55,12 @@ class ArmoniKBackend(BaseBackend):
         self._logger.info(f"Created session {self._session_id}")
         return self._session_id
 
-    def resume_session(self, session_id: str) -> str:
-        raise NotImplementedError
-
     def cancel_session(self) -> None:
         if self._session_id is not None:
             self._client.cancel_session(self._session_id)
             self._logger.warning(f"Session {self._session_id} has been closed")
 
-    def submit_tasks(self, tasks: List[TaskDefinition], partition: str = "default") -> None:
+    def submit_tasks(self, tasks: List[TaskDefinition], partition: Union[str, None]=None) -> None:
         if self._session_id is not None:
             self._logger.info(f"Submitting tasks in session {self._session_id}")
             tasks, submission_errors = self._client.submit(self._session_id, tasks, TaskOptions(

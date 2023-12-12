@@ -63,13 +63,6 @@ class BaseBackend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def resume_session(self, session_id: str) -> str:
-        """
-        Resume an existing session.
-        """
-        pass
-
-    @abc.abstractmethod
     def cancel_session(self) -> None:
         """
         Cancel a running session.
@@ -77,7 +70,7 @@ class BaseBackend(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def submit_tasks(self, tasks: List[TaskDefinition], partition:str = "Default") -> None:
+    def submit_tasks(self, tasks: List[TaskDefinition], partition: Union[str, None]=None) -> None:
         """
         Submit a list of tasks to the ArmoniK cluster.
 

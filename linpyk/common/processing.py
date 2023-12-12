@@ -6,7 +6,7 @@ import numpy as np
 import logging
 
 from armonik.worker import ClefLogger
-from linpyk.common.dto import OpCode
+from linpyk.common.opcode import OpCode
 from linpyk.common.payload import Payload
 from linpyk.common.result import Result
 from scipy.linalg import blas, lapack
@@ -35,7 +35,7 @@ class WorkerProcessingInstance:
         payload: bytes,
         expected_output_ids: List[str],
         data_dependencies: Dict[str, bytearray],
-        logger: ClefLogger | None = None,
+        logger: ClefLogger | logging.Logger | None = None,
     ) -> None:
         deserialized_payload = Payload.deserialize(payload)
         self._opcode = OpCode(deserialized_payload.opcode)
@@ -43,7 +43,12 @@ class WorkerProcessingInstance:
         self._outputs = {}
         self._inputs = {}
         self._options = deserialized_payload.params
-        self._logger = logger
+        self._logger = None
+        if logger is not None:
+            self._logger = logger
+        else:
+            self._logger = logging.getLogger(__name__)
+            self._logger.addHandler(logging.NullHandler)
 
         if deserialized_payload.dependency_names and data_dependencies:
             for name, uuid in deserialized_payload.dependency_names.items():
@@ -57,23 +62,12 @@ class WorkerProcessingInstance:
                 f"Invalid payload outputs ids {self._output_names.values()}"
             )
 
-        # self._validate()
-
-    def _validate(self):
-        """
-        Validates information received. In particular, it checks that
-        the metadata provided  by the payload are consistent with each
-        other and with the other data provided when the class is instantiated.
-        """
-        raise NotImplementedError()
-
     def process(self) -> None:
         """
         Run the requested compute kernel, manages results and error retrieval.
         """
 
-        if self._logger is not None:
-            self._logger.info(f"Performing operation with code {self._opcode}.")
+        self._logger.info(f"Performing operation with code {self._opcode}.")
 
         match self._opcode:
             case OpCode.DRGM:

@@ -3,12 +3,12 @@ Graph operators for generating matrices remotely on the cluster.
 """
 
 from linpyk.common import OpCode
-from linpyk.graph.array import Empty
+from linpyk.graph.array import DTArray
 from linpyk.graph.nodes import ControlNode, TileNode
 from linpyk.graph import graph
 
 
-def remote_dtarray_generator(n_dim: int, tile_size: int, generate: str) -> Empty:
+def remote_dtarray_generator(n_dim: int, tile_size: int, generate: str) -> DTArray:
     """
     Graph operator to generate remotely a matrix of a given type.
 
@@ -23,11 +23,11 @@ def remote_dtarray_generator(n_dim: int, tile_size: int, generate: str) -> Empty
 
     Returns
     ----------
-    a : Empty
+    a : DTArray
         A DTArray object representing the generated matrix.
     """
 
-    a = Empty((n_dim, n_dim), "A")
+    a = DTArray((n_dim, n_dim), "A")
     for i in range(n_dim):
         for j in range(n_dim):
             a[i, j] = TileNode((tile_size, tile_size))

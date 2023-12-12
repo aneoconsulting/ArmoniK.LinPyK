@@ -21,7 +21,7 @@ class DummyBackend(BaseBackend):
 
     Example
     ----------
-    >>> backend = NoBackend()
+    >>> backend = DummyBackend()
     """
 
     # pylint: disable=W0102
@@ -42,13 +42,10 @@ class DummyBackend(BaseBackend):
     def create_session(self) -> str:
         return "No session: running without an ArmoniK cluster."
 
-    def resume_session(self, session_id: str) -> str:
-        pass
-
     def cancel_session(self) -> None:
         pass
 
-    def submit_tasks(self, tasks: List[TaskDefinition], partition: str = "Default") -> None:
+    def submit_tasks(self, tasks: List[TaskDefinition], partition: Union[str, None]=None) -> None:
         for task in tasks:
             task_data_dependencies = {}
             if task.data_dependencies:
@@ -75,10 +72,11 @@ class DummyBackend(BaseBackend):
             except KeyError:
                 raise BackendError("Result submitted before being created.")
 
-    def request_output_id(self):
-        result_id = str(uuid.uuid4())
-        self._results[result_id] = None
-        return result_id
+    def request_output_id(self, num: int = 1) ->  List[str]:
+        result_ids = [str(uuid.uuid4()) for _ in range(num)]
+        for i in range(num):
+            self._results[result_ids[i]] = None
+        return result_ids
 
     def get_result(self, result_id: str) -> Union[Result, None]:
         return Result.deserialize(self._results[result_id])
